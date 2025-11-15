@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, ChevronRight, Home, Search, Trophy, Gamepad2, BookOpen, Clock, Users, Sparkles, Menu, X, Upload } from 'lucide-react'
+import { ChevronDown, ChevronRight, Home, Search, Trophy, Gamepad2, BookOpen, Clock, Users, Sparkles, Menu, X, Upload, Settings } from 'lucide-react'
 import Link from "next/link"
 
 const EVENT_COVER_IMAGE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/video-marketing-7579808_1920-WDCR18pHxNlpDfNO7UQAZl5xBBCbfv.png"
@@ -282,7 +282,7 @@ export default function PlatformPage() {
             Mini-Games
           </Button>
 
-          <div className="pt-4 border-t border-border mt-4">
+          <div className="pt-4 border-t border-border mt-4 space-y-2">
             <Link href="/pdf-converter">
               <Button
                 variant="ghost"
@@ -290,6 +290,15 @@ export default function PlatformPage() {
               >
                 <Upload className="w-4 h-4" />
                 PDF to Exam
+              </Button>
+            </Link>
+            <Link href="/admin">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 text-purple-500 hover:text-purple-600 hover:bg-purple-500/10"
+              >
+                <Settings className="w-4 h-4" />
+                Admin Dashboard
               </Button>
             </Link>
             <p className="text-xs text-muted-foreground px-2 mt-2">Convert DECA PDFs into digital practice exams</p>
