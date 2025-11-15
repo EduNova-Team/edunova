@@ -98,7 +98,6 @@ interface Event {
   name: string
   organization: "DECA" | "FBLA" | "Both"
   slug: string
-  question_count: number
 }
 
 export default function PlatformPage() {
@@ -135,7 +134,6 @@ export default function PlatformPage() {
     id: event.id,
     name: event.name,
     type: event.organization,
-    questions: event.question_count || 0,
     color: getEventColor(event.name, event.organization),
     image: EVENT_COVER_IMAGE,
     slug: event.slug,
@@ -426,11 +424,7 @@ export default function PlatformPage() {
                             <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
                               {quiz.name}
                             </h3>
-                            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                              <span className="flex items-center gap-1">
-                                <BookOpen className="w-3 h-3" />
-                                {quiz.questions} Questions
-                              </span>
+                            <div className="flex items-center justify-end text-sm text-muted-foreground mb-4">
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 Customizable
@@ -438,7 +432,7 @@ export default function PlatformPage() {
                             </div>
                             <Button className={`w-full ${quiz.color} hover:opacity-90 text-white`}>
                               <Sparkles className="w-4 h-4 mr-2" />
-                              Play
+                              Start
                             </Button>
                           </div>
                         </div>
@@ -475,11 +469,7 @@ export default function PlatformPage() {
                             <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
                               {quiz.name}
                             </h3>
-                            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                              <span className="flex items-center gap-1">
-                                <BookOpen className="w-3 h-3" />
-                                {quiz.questions} Questions
-                              </span>
+                            <div className="flex items-center justify-end text-sm text-muted-foreground mb-4">
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 Customizable
@@ -487,7 +477,7 @@ export default function PlatformPage() {
                             </div>
                             <Button className={`w-full ${quiz.color} hover:opacity-90 text-white`}>
                               <Sparkles className="w-4 h-4 mr-2" />
-                              Play
+                              Start
                             </Button>
                           </div>
                         </div>

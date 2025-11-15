@@ -183,30 +183,6 @@ async function generateQuestionsAsync(
       console.error('Error updating generation status:', updateError)
     }
 
-    // Update event question_count
-    const { error: countError } = await supabase.rpc('increment_event_question_count', {
-      event_id_param: eventId,
-      increment_by: generatedQuestions.length,
-    })
-
-    // If RPC doesn't exist, use direct update
-    if (countError) {
-      // Get current count and update
-      const { data: eventData } = await supabase
-        .from('events')
-        .select('question_count')
-        .eq('id', eventId)
-        .single()
-
-      if (eventData) {
-        await supabase
-          .from('events')
-          .update({
-            question_count: (eventData.question_count || 0) + generatedQuestions.length,
-          })
-          .eq('id', eventId)
-      }
-    }
 
     console.log(`Successfully generated and saved ${generatedQuestions.length} questions for generation ${generationId}`)
   } catch (error) {

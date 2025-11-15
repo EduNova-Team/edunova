@@ -8,7 +8,7 @@ export async function GET(request: Request) {
 
           let query = supabase
             .from('events')
-            .select('id, name, organization, slug, description, question_count, created_at, updated_at')
+            .select('id, name, organization, slug, description, created_at, updated_at')
             .order('name', { ascending: true })
 
     if (organization && organization !== 'All') {

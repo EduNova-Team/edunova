@@ -298,9 +298,6 @@ export default function QuizPage() {
                   </span>
                 </div>
               )}
-              <div className="text-sm text-muted-foreground">
-                Question {currentQuestion + 1} of {questions.length}
-              </div>
             </div>
           </div>
         </div>
