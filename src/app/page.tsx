@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, ChevronRight, Home, Search, Trophy, Gamepad2, BookOpen, Clock, Users, Sparkles, Menu, X, Upload, Settings } from 'lucide-react'
+import { ChevronDown, ChevronRight, Home, Search, Trophy, Gamepad2, BookOpen, Clock, Users, Sparkles, Menu, X, Upload, Settings, Loader2 } from 'lucide-react'
 import Link from "next/link"
 
 const EVENT_COVER_IMAGE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/video-marketing-7579808_1920-WDCR18pHxNlpDfNO7UQAZl5xBBCbfv.png"
@@ -66,92 +66,40 @@ const miniGames = [
   },
 ]
 
-const allQuizzes = [
-  {
-    name: "Accounting I",
-    type: "FBLA",
-    questions: 250,
-    color: "bg-blue-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Accounting Applications",
-    type: "DECA",
-    questions: 180,
-    color: "bg-purple-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Personal Finance",
-    type: "FBLA",
-    questions: 248,
-    color: "bg-green-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Business Management",
-    type: "Both",
-    questions: 250,
-    color: "bg-cyan-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Marketing",
-    type: "Both",
-    questions: 325,
-    color: "bg-pink-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Advertising",
-    type: "DECA",
-    questions: 250,
-    color: "bg-pink-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Cybersecurity",
-    type: "FBLA",
-    questions: 249,
-    color: "bg-purple-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Introduction to IT",
-    type: "FBLA",
-    questions: 250,
-    color: "bg-gray-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Financial Math",
-    type: "FBLA",
-    questions: 200,
-    color: "bg-orange-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Securities & Investments",
-    type: "DECA",
-    questions: 250,
-    color: "bg-green-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Hospitality & Tourism",
-    type: "DECA",
-    questions: 180,
-    color: "bg-blue-500",
-    image: EVENT_COVER_IMAGE,
-  },
-  {
-    name: "Entrepreneurship",
-    type: "Both",
-    questions: 220,
-    color: "bg-yellow-500",
-    image: EVENT_COVER_IMAGE,
-  },
-]
+// Color mapping for events (you can customize this)
+const getEventColor = (eventName: string, organization: string): string => {
+  const colors: Record<string, string> = {
+    "Accounting": "bg-blue-500",
+    "Marketing": "bg-pink-500",
+    "Business Management": "bg-cyan-500",
+    "Finance": "bg-green-500",
+    "Entrepreneurship": "bg-yellow-500",
+    "Hospitality": "bg-blue-500",
+    "Advertising": "bg-pink-500",
+    "Cybersecurity": "bg-purple-500",
+    "Securities": "bg-green-500",
+  }
+  
+  // Try to match by keywords
+  for (const [key, color] of Object.entries(colors)) {
+    if (eventName.toLowerCase().includes(key.toLowerCase())) {
+      return color
+    }
+  }
+  
+  // Default colors by organization
+  if (organization === "DECA") return "bg-purple-500"
+  if (organization === "FBLA") return "bg-blue-500"
+  return "bg-gray-500"
+}
+
+interface Event {
+  id: string
+  name: string
+  organization: "DECA" | "FBLA" | "Both"
+  slug: string
+  question_count: number
+}
 
 export default function PlatformPage() {
   const [decaOpen, setDecaOpen] = useState(false)
@@ -159,6 +107,39 @@ export default function PlatformPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<"All" | "DECA" | "FBLA" | "Both" | "Mini-Games">("All")
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch events from Supabase
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/events?organization=All')
+        const data = await response.json()
+        if (data.events) {
+          setEvents(data.events)
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEvents()
+  }, [])
+
+  // Transform events to quiz format
+  const allQuizzes = events.map((event) => ({
+    id: event.id,
+    name: event.name,
+    type: event.organization,
+    questions: event.question_count || 0,
+    color: getEventColor(event.name, event.organization),
+    image: EVENT_COVER_IMAGE,
+    slug: event.slug,
+  }))
 
   const filteredQuizzes = allQuizzes.filter((quiz) => {
     const matchesSearch = quiz.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -410,7 +391,13 @@ export default function PlatformPage() {
             </section>
           )}
 
-          {filterType !== "Mini-Games" && (
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
+
+          {!loading && filterType !== "Mini-Games" && (
             <>
               {/* DECA Practice Quizzes */}
               {(filterType === "All" || filterType === "DECA") && decaQuizzes.length > 0 && (
@@ -419,7 +406,7 @@ export default function PlatformPage() {
                   <p className="text-muted-foreground mb-6">Questions are based on updated 2025 guidelines!</p>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {decaQuizzes.map((quiz) => (
-                      <Link key={quiz.name} href={`/event/${quiz.name.toLowerCase().replace(/\s+/g, "-")}`}>
+                      <Link key={quiz.id || quiz.name} href={`/event/${quiz.slug || quiz.name.toLowerCase().replace(/\s+/g, "-")}`}>
                         <div className="group rounded-lg bg-card border border-border hover:border-primary transition-all cursor-pointer overflow-hidden">
                           {/* Quiz Image */}
                           <div className="relative h-40 overflow-hidden">
@@ -468,7 +455,7 @@ export default function PlatformPage() {
                   <p className="text-muted-foreground mb-6">Questions are based on updated 2025 guidelines!</p>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {fblaQuizzes.map((quiz) => (
-                      <Link key={quiz.name} href={`/event/${quiz.name.toLowerCase().replace(/\s+/g, "-")}`}>
+                      <Link key={quiz.id || quiz.name} href={`/event/${quiz.slug || quiz.name.toLowerCase().replace(/\s+/g, "-")}`}>
                         <div className="group rounded-lg bg-card border border-border hover:border-primary transition-all cursor-pointer overflow-hidden">
                           {/* Quiz Image */}
                           <div className="relative h-40 overflow-hidden">

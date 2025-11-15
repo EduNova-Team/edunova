@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -35,6 +36,7 @@ export default function AdminDashboard() {
   const [selectedEvent, setSelectedEvent] = useState<string>("")
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [questionCount, setQuestionCount] = useState<string>("10")
+  const [additionalContext, setAdditionalContext] = useState<string>("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [generationStatus, setGenerationStatus] = useState<{
     status: "idle" | "processing" | "completed" | "error"
@@ -154,6 +156,7 @@ export default function AdminDashboard() {
           eventId: selectedEvent,
           knowledgeBaseIds,
           questionCount: count,
+          additionalContext: additionalContext.trim() || null,
         }),
       })
 
@@ -173,6 +176,7 @@ export default function AdminDashboard() {
       setTimeout(() => {
         setUploadedFiles([])
         setQuestionCount("10")
+        setAdditionalContext("")
         setGenerationStatus({ status: "idle", message: "" })
       }, 5000)
     } catch (error) {
@@ -344,6 +348,22 @@ export default function AdminDashboard() {
               />
               <p className="text-xs text-muted-foreground">
                 Maximum 100 questions per generation
+              </p>
+            </div>
+
+            {/* Step 5: Additional Context */}
+            <div className="space-y-2">
+              <Label htmlFor="additional-context">Additional Context (Optional)</Label>
+              <Textarea
+                id="additional-context"
+                value={additionalContext}
+                onChange={(e) => setAdditionalContext(e.target.value)}
+                placeholder="Provide additional context about the event, topics to focus on, question style preferences, or any specific requirements for the questions..."
+                rows={5}
+                className="resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                This context will be used to guide question generation. Examples: "Focus on marketing principles", "Include questions about digital marketing", "Questions should be at medium difficulty level"
               </p>
             </div>
 

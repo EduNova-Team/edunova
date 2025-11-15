@@ -6,10 +6,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const organization = searchParams.get('organization')
 
-    let query = supabase
-      .from('events')
-      .select('*')
-      .order('name', { ascending: true })
+          let query = supabase
+            .from('events')
+            .select('id, name, organization, slug, description, question_count, created_at, updated_at')
+            .order('name', { ascending: true })
 
     if (organization && organization !== 'All') {
       if (organization === 'DECA') {

@@ -4,33 +4,19 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, Sparkles, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { ArrowLeft, Sparkles, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react'
 import Link from "next/link"
 import { useParams, useSearchParams } from 'next/navigation'
 
-const sampleQuestions = [
-  {
-    id: 1,
-    question: "What is the primary purpose of a balance sheet in financial accounting?",
-    options: [
-      "To show profitability over time",
-      "To display assets, liabilities, and equity at a point in time",
-      "To track cash flow",
-      "To calculate tax obligations",
-    ],
-    correctAnswer: 1,
-    explanation:
-      "A balance sheet provides a snapshot of a company's financial position at a specific point in time. It shows what the company owns (assets), what it owes (liabilities), and the residual interest of owners (equity). Think of it like taking a financial photograph - it captures the moment.",
-  },
-  {
-    id: 2,
-    question: "Which of the following is an example of a fixed cost?",
-    options: ["Raw materials", "Sales commissions", "Monthly rent", "Shipping costs"],
-    correctAnswer: 2,
-    explanation:
-      "Fixed costs remain constant regardless of production volume. Monthly rent is a perfect example - you pay the same amount whether you produce 10 units or 10,000 units. Variable costs like raw materials change with production levels.",
-  },
-]
+interface Question {
+  id: string
+  question: string
+  options: string[]
+  correctAnswer: number
+  explanation: string
+  difficulty?: string
+  topicTags?: string[]
+}
 
 export default function QuizPage() {
   const params = useParams()
@@ -43,9 +29,11 @@ export default function QuizPage() {
   const mode = searchParams.get("mode") || "practice"
   const isTestMode = mode === "test"
 
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [loading, setLoading] = useState(true)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
-  const [userAnswers, setUserAnswers] = useState<(number | null)[]>(new Array(sampleQuestions.length).fill(null))
+  const [userAnswers, setUserAnswers] = useState<(number | null)[]>([])
   const [showExplanation, setShowExplanation] = useState(false)
   const [showAIExplanation, setShowAIExplanation] = useState(false)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
@@ -53,7 +41,37 @@ export default function QuizPage() {
   const [reviewMode, setReviewMode] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(Number.parseInt(timeLimit) * 60)
 
-  const question = sampleQuestions[currentQuestion]
+  // Fetch questions from API
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setLoading(true)
+        const limit = parseInt(numQuestions, 10) || 10
+        const response = await fetch(`/api/questions?eventId=${eventId}&limit=${limit}&publishedOnly=true`)
+        const data = await response.json()
+
+        if (data.questions && data.questions.length > 0) {
+          // Shuffle questions for variety
+          const shuffled = [...data.questions].sort(() => Math.random() - 0.5)
+          const selected = shuffled.slice(0, limit)
+          setQuestions(selected)
+          setUserAnswers(new Array(selected.length).fill(null))
+        } else {
+          // No questions available
+          setQuestions([])
+        }
+      } catch (error) {
+        console.error('Error fetching questions:', error)
+        setQuestions([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchQuestions()
+  }, [eventId, numQuestions])
+
+  const question = questions[currentQuestion]
 
   useEffect(() => {
     if (!isTestMode || reviewMode || quizCompleted) return
@@ -94,7 +112,7 @@ export default function QuizPage() {
   }
 
   const handleNextInTest = () => {
-    if (currentQuestion >= sampleQuestions.length - 1) {
+    if (currentQuestion >= questions.length - 1) {
       handleFinishTest()
       return
     }
@@ -112,15 +130,16 @@ export default function QuizPage() {
   }
 
   const handleFinishTest = () => {
+    if (questions.length === 0) return
     setReviewMode(true)
     setCurrentQuestion(0)
     setSelectedAnswer(userAnswers[0])
-    setIsCorrect(userAnswers[0] === sampleQuestions[0].correctAnswer)
+    setIsCorrect(userAnswers[0] === questions[0].correctAnswer)
     setShowExplanation(true)
   }
 
   const handleNext = () => {
-    if (currentQuestion >= sampleQuestions.length - 1) {
+    if (currentQuestion >= questions.length - 1) {
       setQuizCompleted(true)
       return
     }
@@ -132,25 +151,45 @@ export default function QuizPage() {
   }
 
   const handleNextInReview = () => {
-    if (currentQuestion >= sampleQuestions.length - 1) {
+    if (currentQuestion >= questions.length - 1) {
       setQuizCompleted(true)
       return
     }
     const nextQuestion = currentQuestion + 1
     setCurrentQuestion(nextQuestion)
     setSelectedAnswer(userAnswers[nextQuestion])
-    setIsCorrect(userAnswers[nextQuestion] === sampleQuestions[nextQuestion].correctAnswer)
+    setIsCorrect(userAnswers[nextQuestion] === questions[nextQuestion].correctAnswer)
     setShowAIExplanation(false)
+  }
+
+  const handlePreviousInReview = () => {
+    if (currentQuestion > 0) {
+      const prevQuestion = currentQuestion - 1
+      setCurrentQuestion(prevQuestion)
+      setSelectedAnswer(userAnswers[prevQuestion])
+      setIsCorrect(userAnswers[prevQuestion] === questions[prevQuestion].correctAnswer)
+      setShowAIExplanation(false)
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion((prev) => prev - 1)
+      setSelectedAnswer(null)
+      setShowExplanation(false)
+      setShowAIExplanation(false)
+      setIsCorrect(null)
+    }
   }
 
   const calculateScore = () => {
     let correct = 0
     userAnswers.forEach((answer, index) => {
-      if (answer === sampleQuestions[index]?.correctAnswer) {
+      if (answer === questions[index]?.correctAnswer) {
         correct++
       }
     })
-    return { correct, total: sampleQuestions.length, percentage: (correct / sampleQuestions.length) * 100 }
+    return { correct, total: questions.length, percentage: (correct / questions.length) * 100 }
   }
 
   if (quizCompleted) {
@@ -197,6 +236,36 @@ export default function QuizPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="p-8">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading questions...</p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="p-8 text-center max-w-md">
+          <XCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No Questions Available</h2>
+          <p className="text-muted-foreground mb-4">
+            There are no published questions for this event yet. Please check back later.
+          </p>
+          <Button variant="outline" asChild>
+            <Link href={`/event/${eventId}`}>Back to Event</Link>
+          </Button>
+        </Card>
+      </div>
+    )
+  }
+
   if (!question) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -230,7 +299,7 @@ export default function QuizPage() {
                 </div>
               )}
               <div className="text-sm text-muted-foreground">
-                Question {currentQuestion + 1} of {numQuestions}
+                Question {currentQuestion + 1} of {questions.length}
               </div>
             </div>
           </div>
@@ -239,8 +308,10 @@ export default function QuizPage() {
 
       {/* Progress */}
       <div className="border-b border-border">
-        <div className="container py-4">
-          <Progress value={((currentQuestion + 1) / Number.parseInt(numQuestions)) * 100} className="h-2" />
+        <div className="container py-4 flex justify-center">
+          <div className="w-full max-w-3xl">
+            <Progress value={((currentQuestion + 1) / questions.length) * 100} className="h-2" />
+          </div>
         </div>
       </div>
 
@@ -347,15 +418,35 @@ export default function QuizPage() {
                 )}
 
                 {reviewMode && (
-                  <Button className="w-full bg-primary hover:bg-primary/90" onClick={handleNextInReview}>
-                    {currentQuestion < sampleQuestions.length - 1 ? "Next Question" : "View Final Score"}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={handlePreviousInReview}
+                      disabled={currentQuestion === 0}
+                    >
+                      Previous
+                    </Button>
+                    <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={handleNextInReview}>
+                      {currentQuestion < questions.length - 1 ? "Next Question" : "View Final Score"}
+                    </Button>
+                  </div>
                 )}
 
                 {!reviewMode && !isTestMode && (
-                  <Button className="w-full bg-primary hover:bg-primary/90" onClick={handleNext}>
-                    {currentQuestion < sampleQuestions.length - 1 ? "Next Question" : "Finish Quiz"}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={handlePrevious}
+                      disabled={currentQuestion === 0}
+                    >
+                      Previous
+                    </Button>
+                    <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={handleNext}>
+                      {currentQuestion < questions.length - 1 ? "Next Question" : "Finish Quiz"}
+                    </Button>
+                  </div>
                 )}
               </div>
             )}
@@ -370,7 +461,7 @@ export default function QuizPage() {
                 >
                   Previous
                 </Button>
-                {currentQuestion < sampleQuestions.length - 1 ? (
+                {currentQuestion < questions.length - 1 ? (
                   <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={handleNextInTest}>
                     Next
                   </Button>
