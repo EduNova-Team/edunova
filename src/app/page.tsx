@@ -153,28 +153,23 @@ export default function PlatformPage() {
       <aside
         className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-64 border-r border-border bg-card flex flex-col
+        w-64 sm:w-64 md:w-64 lg:w-72 border-r border-white/10 bg-[#0D1224]/90 supports-[backdrop-filter]:bg-[#0D1224]/80 backdrop-blur flex flex-col
         transform transition-transform lg:translate-x-0
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}
       >
-        {/* Logo */}
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="text-2xl">🎓</div>
-            <span className="text-xl font-bold">
-              <span className="text-primary">Edu</span>
-              <span className="text-secondary">Nova</span>
-            </span>
-          </Link>
-          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <Button variant="ghost" className="w-full justify-start gap-2" onClick={() => setFilterType("All")}>
+          <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+            Explore
+          </div>
+          <Button
+            variant="ghost"
+            data-active={filterType === "All"}
+            className="relative w-full justify-start gap-2 rounded-lg hover:bg-white/5 text-foreground/90 data-[active=true]:bg-white/7 data-[active=true]:text-white data-[active=true]:ring-1 data-[active=true]:ring-white/10 pl-4"
+            onClick={() => setFilterType("All")}
+          >
+            <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full opacity-0 data-[active=true]:opacity-100 bg-gradient-to-b from-[#6EA0FF] to-[#27E0FF]" />
             <Home className="w-4 h-4" />
             All Events
           </Button>
@@ -183,15 +178,17 @@ export default function PlatformPage() {
           <div>
             <Button
               variant="ghost"
-              className="w-full justify-between"
+              data-active={filterType === "DECA"}
+              className="relative w-full justify-between rounded-lg hover:bg-white/5 text-foreground/90 data-[active=true]:bg-white/7 data-[active=true]:text-white data-[active=true]:ring-1 data-[active=true]:ring-white/10 pl-4"
               onClick={() => {
                 setDecaOpen(!decaOpen)
                 setFilterType("DECA")
               }}
             >
+              <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full opacity-0 data-[active=true]:opacity-100 bg-gradient-to-b from-[#6EA0FF] to-[#27E0FF]" />
               <span className="flex items-center gap-2">
                 <Trophy className="w-4 h-4" />
-                DECA
+                <span className="font-mono tracking-tight">DECA</span>
               </span>
               {decaOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </Button>
@@ -202,7 +199,7 @@ export default function PlatformPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start text-xs text-muted-foreground hover:text-foreground"
+                      className="w-full justify-start text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-white/5 text-left"
                     >
                       {event}
                     </Button>
@@ -216,15 +213,17 @@ export default function PlatformPage() {
           <div>
             <Button
               variant="ghost"
-              className="w-full justify-between"
+              data-active={filterType === "FBLA"}
+              className="relative w-full justify-between rounded-lg hover:bg-white/5 text-foreground/90 data-[active=true]:bg-white/7 data-[active=true]:text-white data-[active=true]:ring-1 data-[active=true]:ring-white/10 pl-4"
               onClick={() => {
                 setFblaOpen(!fblaOpen)
                 setFilterType("FBLA")
               }}
             >
+              <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full opacity-0 data-[active=true]:opacity-100 bg-gradient-to-b from-[#6EA0FF] to-[#27E0FF]" />
               <span className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                FBLA
+                <span className="font-mono tracking-tight">FBLA</span>
               </span>
               {fblaOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </Button>
@@ -235,7 +234,7 @@ export default function PlatformPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start text-xs text-muted-foreground hover:text-foreground"
+                      className="w-full justify-start text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-white/5 text-left"
                     >
                       {event}
                     </Button>
@@ -246,16 +245,22 @@ export default function PlatformPage() {
           </div>
 
           {/* Mini-Games */}
-          <Button variant="ghost" className="w-full justify-start gap-2" onClick={() => setFilterType("Mini-Games")}>
+          <Button
+            variant="ghost"
+            data-active={filterType === "Mini-Games"}
+            className="relative w-full justify-start gap-2 rounded-lg hover:bg-white/5 text-foreground/90 data-[active=true]:bg-white/7 data-[active=true]:text-white data-[active=true]:ring-1 data-[active=true]:ring-white/10 pl-4"
+            onClick={() => setFilterType("Mini-Games")}
+          >
+            <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full opacity-0 data-[active=true]:opacity-100 bg-gradient-to-b from-[#6EA0FF] to-[#27E0FF]" />
             <Gamepad2 className="w-4 h-4" />
             Mini-Games
           </Button>
 
-          <div className="pt-4 border-t border-border mt-4 space-y-2">
+          <div className="pt-4 border-t border-white/10 mt-4 space-y-2">
             <Link href="/pdf-converter">
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                className="w-full justify-start gap-2 text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 rounded-lg"
               >
                 <Upload className="w-4 h-4" />
                 PDF to Exam
@@ -264,7 +269,7 @@ export default function PlatformPage() {
             <Link href="/admin">
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 text-purple-500 hover:text-purple-600 hover:bg-purple-500/10"
+                className="w-full justify-start gap-2 text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 rounded-lg"
               >
                 <Settings className="w-4 h-4" />
                 Admin Dashboard
@@ -272,12 +277,19 @@ export default function PlatformPage() {
             </Link>
             <p className="text-xs text-muted-foreground px-2 mt-2">Convert DECA PDFs into digital practice exams</p>
           </div>
+
+          {/* Sidebar CTA */}
+          <div className="mt-6 p-3">
+            <Button className="w-full rounded-full bg-gradient-to-r from-[#6EA0FF] to-[#27E0FF] text-black hover:from-[#6EA0FF]/90 hover:to-[#27E0FF]/90">
+              Get Started
+            </Button>
+          </div>
         </nav>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <header className="sticky top-0 z-10 bg-card border-b border-border px-4 lg:px-8 py-4">
+        <header className="px-4 lg:px-8 py-4">
           <div className="flex items-center gap-4">
             {/* Mobile menu button */}
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
@@ -326,14 +338,7 @@ export default function PlatformPage() {
               </Button>
             </div>
 
-            <div className="flex items-center gap-2 ml-auto">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
-              <Button size="sm" className="bg-primary hover:bg-primary/90" asChild>
-                <Link href="/sign-up">Get Started</Link>
-              </Button>
-            </div>
+            {/* Right-side actions removed; global header handles auth CTAs */}
           </div>
         </header>
 

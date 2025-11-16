@@ -33,7 +33,7 @@ export async function generateQuestionsFromText(
   const systemPrompt = `You are an expert question generator for competitive business exams (DECA and FBLA). 
 Your task is to generate high-quality multiple-choice questions that match the style and format of official DECA practice tests.
 
-DECA Question Style Guidelines:::
+DECA Question Style Guidelines:
 - Questions are direct and test specific business concepts, principles, or procedures
 - Questions often start with "What", "Which", "How", or "Why" 
 - Questions test understanding of business terminology, processes, and real-world applications

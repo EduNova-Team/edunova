@@ -1,10 +1,12 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google"
 import "./globals.css"
+import { SiteHeader } from "@/components/site-header"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans" })
+const fontMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" })
+const fontSpace = Space_Grotesk({ subsets: ["latin"], variable: "--font-space" })
 
 export const metadata: Metadata = {
   title: "EduNova Games - DECA & FBLA Study Platform",
@@ -35,8 +37,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`font-sans antialiased ${_geist.className}`}>
+    <html lang="en" className={`${fontMono.variable} ${fontSpace.variable} dark`}>
+      <body className={`font-sans antialiased ${fontSans.variable} bg-[#0A0A16] text-white min-h-screen flex flex-col`}>
+        <SiteHeader />
         {children}
       </body>
     </html>
