@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Upload, Loader2, CheckCircle2, XCircle, FileText, Sparkles } from "lucide-react"
+import { Upload, Loader2, CheckCircle2, XCircle, FileText, Sparkles, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 
 interface Event {
@@ -21,6 +21,7 @@ interface Event {
   name: string
   organization: "DECA" | "FBLA" | "Both"
   slug: string
+  image_url?: string | null
 }
 
 interface UploadedFile {
@@ -37,6 +38,12 @@ export default function AdminDashboard() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [questionCount, setQuestionCount] = useState<string>("10")
   const [additionalContext, setAdditionalContext] = useState<string>("")
+  const [eventImageUrl, setEventImageUrl] = useState<string>("")
+  const [isSavingImage, setIsSavingImage] = useState(false)
+  const [imageSaveStatus, setImageSaveStatus] = useState<{
+    status: "idle" | "success" | "error"
+    message: string
+  }>({ status: "idle", message: "" })
   const [isGenerating, setIsGenerating] = useState(false)
   const [generationStatus, setGenerationStatus] = useState<{
     status: "idle" | "processing" | "completed" | "error"
@@ -55,6 +62,7 @@ export default function AdminDashboard() {
           setEvents(data.events)
           // Reset selected event when organization changes
           setSelectedEvent("")
+          setEventImageUrl("")
         }
       } catch (error) {
         console.error("Error fetching events:", error)
@@ -63,6 +71,20 @@ export default function AdminDashboard() {
 
     fetchEvents()
   }, [organization])
+
+  // Update event image URL when event is selected
+  useEffect(() => {
+    if (selectedEvent) {
+      const event = events.find((e) => e.id === selectedEvent)
+      if (event?.image_url) {
+        setEventImageUrl(event.image_url)
+      } else {
+        setEventImageUrl("")
+      }
+    } else {
+      setEventImageUrl("")
+    }
+  }, [selectedEvent, events])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -83,6 +105,64 @@ export default function AdminDashboard() {
     if (bytes < 1024) return bytes + " B"
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB"
     return (bytes / (1024 * 1024)).toFixed(1) + " MB"
+  }
+
+  const handleSaveImage = async () => {
+    if (!selectedEvent) {
+      setImageSaveStatus({
+        status: "error",
+        message: "Please select an event first",
+      })
+      return
+    }
+
+    setIsSavingImage(true)
+    setImageSaveStatus({ status: "idle", message: "" })
+
+    try {
+      const response = await fetch("/api/events/update-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: selectedEvent,
+          imageUrl: eventImageUrl.trim() || null,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to update event image")
+      }
+
+      setImageSaveStatus({
+        status: "success",
+        message: "Event image updated successfully!",
+      })
+
+      // Refresh events to get updated image_url
+      const refreshResponse = await fetch(
+        `/api/events?organization=${organization}`
+      )
+      const refreshData = await refreshResponse.json()
+      if (refreshData.events) {
+        setEvents(refreshData.events)
+      }
+
+      // Clear status after 3 seconds
+      setTimeout(() => {
+        setImageSaveStatus({ status: "idle", message: "" })
+      }, 3000)
+    } catch (error) {
+      console.error("Error saving image:", error)
+      setImageSaveStatus({
+        status: "error",
+        message: error instanceof Error ? error.message : "Failed to update event image",
+      })
+    } finally {
+      setIsSavingImage(false)
+    }
   }
 
   const handleGenerate = async () => {
@@ -275,6 +355,69 @@ export default function AdminDashboard() {
                 </p>
               )}
             </div>
+
+            {/* Event Image URL */}
+            {selectedEvent && (
+              <div className="space-y-2 p-4 border border-border rounded-lg bg-card/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                  <Label htmlFor="event-image">Event Image URL</Label>
+                </div>
+                <Input
+                  id="event-image"
+                  type="url"
+                  value={eventImageUrl}
+                  onChange={(e) => setEventImageUrl(e.target.value)}
+                  placeholder="https://cdn.pixabay.com/photo/..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter a direct image URL (e.g., from Pixabay). Leave empty to use default image.
+                </p>
+                {eventImageUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={eventImageUrl}
+                      alt="Preview"
+                      className="w-full h-32 object-cover rounded-lg border border-border"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none"
+                      }}
+                    />
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveImage}
+                  disabled={isSavingImage}
+                  className="w-full"
+                >
+                  {isSavingImage ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Save Image
+                    </>
+                  )}
+                </Button>
+                {imageSaveStatus.status !== "idle" && (
+                  <div
+                    className={`p-2 rounded text-xs ${
+                      imageSaveStatus.status === "success"
+                        ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                        : "bg-red-500/10 text-red-500 border border-red-500/20"
+                    }`}
+                  >
+                    {imageSaveStatus.message}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Step 3: PDF Upload */}
             <div className="space-y-2">

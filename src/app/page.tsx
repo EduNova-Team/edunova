@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ChevronDown, ChevronRight, Home, Search, Trophy, Gamepad2, BookOpen, Clock, Users, Sparkles, Menu, X, Upload, Settings, Loader2 } from 'lucide-react'
 import Link from "next/link"
+import { miniGames } from "@/data/mini-games"
 
 const EVENT_COVER_IMAGE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/video-marketing-7579808_1920-WDCR18pHxNlpDfNO7UQAZl5xBBCbfv.png"
 
@@ -36,35 +37,7 @@ const fblaEvents = [
   "Marketing",
 ]
 
-const miniGames = [
-  {
-    id: "buzzword-blitz",
-    name: "Buzzword Blitz",
-    description: "Match business terms with definitions under time pressure",
-    icon: "⚡",
-    image: "/placeholder.svg?height=200&width=300",
-    players: 1250,
-    avgTime: "3 min",
-  },
-  {
-    id: "case-study-sprint",
-    name: "Case Study Sprint",
-    description: "Solve business scenarios quickly and accurately",
-    icon: "📊",
-    image: "/placeholder.svg?height=200&width=300",
-    players: 890,
-    avgTime: "5 min",
-  },
-  {
-    id: "finance-frenzy",
-    name: "Finance Frenzy",
-    description: "Calculate financial metrics in rapid-fire rounds",
-    icon: "💰",
-    image: "/placeholder.svg?height=200&width=300",
-    players: 670,
-    avgTime: "4 min",
-  },
-]
+// miniGames now imported from @/data/mini-games
 
 // Color mapping for events (you can customize this)
 const getEventColor = (eventName: string, organization: string): string => {
@@ -115,7 +88,11 @@ export default function PlatformPage() {
     const fetchEvents = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/events?organization=All')
+        // Add timestamp to bust cache
+        const timestamp = new Date().getTime()
+        const response = await fetch(`/api/events?organization=All&_t=${timestamp}`, {
+          cache: 'no-store',
+        })
         const data = await response.json()
         if (data.events) {
           setEvents(data.events)
@@ -128,6 +105,18 @@ export default function PlatformPage() {
     }
 
     fetchEvents()
+
+    // Refetch when page becomes visible (useful after updating images in admin)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchEvents()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   // Transform events to quiz format
@@ -372,16 +361,22 @@ export default function PlatformPage() {
                           {game.name}
                         </h3>
                         <p className="text-sm text-muted-foreground mb-4">{game.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            {game.players}
+                        {(game.players || game.avgTime) && (
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            {typeof game.players === "number" && (
+                              <div className="flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                {game.players}
+                              </div>
+                            )}
+                            {game.avgTime && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {game.avgTime}
+                              </div>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {game.avgTime}
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                   </Link>
@@ -425,7 +420,11 @@ export default function PlatformPage() {
                             <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
                               {quiz.name}
                             </h3>
-                            <div className="flex items-center justify-end text-sm text-muted-foreground mb-4">
+                            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                              <span className="flex items-center gap-1">
+                                <BookOpen className="w-3 h-3" />
+                                1000 Questions
+                              </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 Customizable
@@ -470,7 +469,11 @@ export default function PlatformPage() {
                             <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
                               {quiz.name}
                             </h3>
-                            <div className="flex items-center justify-end text-sm text-muted-foreground mb-4">
+                            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                              <span className="flex items-center gap-1">
+                                <BookOpen className="w-3 h-3" />
+                                1000 Questions
+                              </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 Customizable

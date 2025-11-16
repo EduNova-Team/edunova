@@ -41,6 +41,7 @@ DECA Question Style Guidelines:
 - Distractors (wrong answers) are plausible but clearly incorrect
 - Questions reference specific business scenarios, legal concepts, or operational procedures
 - Difficulty ranges from straightforward definitions to application-based scenarios
+- Rule: for every 100 questions, 40 need to be easy, 40 need to be medium, and 20 need to be hard.
 
 Requirements:
 - Generate exactly ${questionCount} multiple-choice question(s)

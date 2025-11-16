@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Play, Clock, BookOpen } from 'lucide-react'
 import Link from "next/link"
 import { useParams } from 'next/navigation'
@@ -16,7 +15,6 @@ export default function EventConfigPage() {
 
   const [numQuestions, setNumQuestions] = useState("10")
   const [timeLimit, setTimeLimit] = useState("15")
-  const [difficulty, setDifficulty] = useState("any")
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -69,29 +67,11 @@ export default function EventConfigPage() {
                 />
               </div>
 
-              {/* Difficulty */}
-              <div>
-                <Label htmlFor="difficulty" className="text-base">
-                  Difficulty
-                </Label>
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger id="difficulty" className="mt-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Buttons */}
               <div className="space-y-3 pt-4">
                 <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="lg" asChild>
                   <Link
-                    href={`/event/${eventId}/quiz?questions=${numQuestions}&time=${timeLimit}&difficulty=${difficulty}&mode=test`}
+                    href={`/event/${eventId}/quiz?questions=${numQuestions}&time=${timeLimit}&mode=test`}
                   >
                     <Play className="w-4 h-4 mr-2" />
                     Generate Test

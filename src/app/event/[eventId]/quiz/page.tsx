@@ -290,6 +290,9 @@ export default function QuizPage() {
               Exit Quiz
             </Link>
             <div className="flex items-center gap-4">
+              <div className="text-sm font-medium text-muted-foreground">
+                Question {currentQuestion + 1} of {questions.length}
+              </div>
               {isTestMode && !reviewMode && (
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Clock className="w-4 h-4" />
