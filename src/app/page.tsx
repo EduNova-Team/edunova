@@ -98,6 +98,7 @@ interface Event {
   name: string
   organization: "DECA" | "FBLA" | "Both"
   slug: string
+  image_url?: string | null
 }
 
 export default function PlatformPage() {
@@ -135,7 +136,7 @@ export default function PlatformPage() {
     name: event.name,
     type: event.organization,
     color: getEventColor(event.name, event.organization),
-    image: EVENT_COVER_IMAGE,
+    image: event.image_url || EVENT_COVER_IMAGE, // Use event's custom image or fallback to default
     slug: event.slug,
   }))
 
