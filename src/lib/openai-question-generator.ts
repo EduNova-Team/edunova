@@ -14,7 +14,24 @@ export interface GeneratedQuestion {
 }
 
 /**
- * Generates questions from knowledge base text using OpenAI
+ * Calculates difficulty distribution for DECA 40/40/20 rule
+ */
+function calculateDifficultyDistribution(totalQuestions: number): {
+  easy: number
+  medium: number
+  hard: number
+} {
+  // DECA standard: 40% easy, 40% medium, 20% hard
+  const easy = Math.round(totalQuestions * 0.4)
+  const hard = Math.round(totalQuestions * 0.2)
+  const medium = totalQuestions - easy - hard // Remainder goes to medium
+  
+  return { easy, medium, hard }
+}
+
+/**
+ * Generates questions from knowledge base text using OpenAI GPT-5
+ * Optimized to match authentic DECA exam style with enforced difficulty distribution
  */
 export async function generateQuestionsFromText(
   knowledgeBaseText: string,
@@ -22,67 +39,109 @@ export async function generateQuestionsFromText(
   additionalContext: string | null,
   questionCount: number
 ): Promise<GeneratedQuestion[]> {
-  // Combine all knowledge base text
   const fullText = knowledgeBaseText
+  const contextPrompt = additionalContext ? `\n\nAdditional Context: ${additionalContext}` : ''
+  
+  // Calculate exact difficulty distribution
+  const distribution = calculateDifficultyDistribution(questionCount)
 
-  // Build the prompt
-  const contextPrompt = additionalContext
-    ? `\n\nAdditional Context: ${additionalContext}`
-    : ''
+  // Enhanced prompt matching actual DECA style based on official exam analysis
+  const systemPrompt = `You are an expert DECA exam question writer. Generate questions that EXACTLY match official DECA exam style.
 
-  const systemPrompt = `You are an expert question generator for competitive business exams (DECA and FBLA). 
-Your task is to generate high-quality multiple-choice questions that match the style and format of official DECA practice tests.
+CRITICAL STYLE REQUIREMENTS (based on official DECA exams):
 
-DECA Question Style Guidelines:
-- Questions are direct and test specific business concepts, principles, or procedures
-- Questions often start with "What", "Which", "How", or "Why" 
-- Questions test understanding of business terminology, processes, and real-world applications
-- Answer choices are concise (typically 1-8 words each)
-- Distractors (wrong answers) are plausible but clearly incorrect
-- Questions reference specific business scenarios, legal concepts, or operational procedures
-- Difficulty ranges from straightforward definitions to application-based scenarios
-- Rule: for every 100 questions, 40 need to be easy, 40 need to be medium, and 20 need to be hard.
+1. QUESTION FORMAT:
+   - Start with scenario: "Maria is preparing a marketing report..." or "A customer asks Roger..."
+   - Use real names (common first names like Sarah, Kevin, Marcus, etc.)
+   - End with specific question using patterns like:
+     * "Which of the following..."
+     * "What should [name] do..."
+     * "Which technique/method/strategy..."
+   - Questions must be 1-2 sentences maximum
 
-Requirements:
-- Generate exactly ${questionCount} multiple-choice question(s)
-- Each question must have exactly 4 answer options (A, B, C, D)
-- Questions MUST be based directly on the provided knowledge base content
-- Questions should test understanding of concepts, not just recall
-- Answer choices should be concise and parallel in structure
-- Include a clear, educational explanation that references the concept being tested
-- Format your response as a JSON object with a "questions" array
+2. ANSWER CHOICES (CRITICAL):
+   - Each option must be 2-6 words MAXIMUM
+   - Options must be parallel in structure
+   - Use sentence case (capitalize first word only)
+   - Examples of correct length:
+     * "Ask his coworker for advice"
+     * "Active listening"
+     * "Refer to the style manual"
+     * "Build positive relationships"
+   - NO full sentences, NO explanations in options
 
-Response Format:
+3. EXPLANATION FORMAT (VERY IMPORTANT):
+   - Must be 4-7 sentences long
+   - First sentence: State correct answer and why it's correct
+   - Middle sentences: Explain why each wrong answer is incorrect
+   - Final sentence: Reinforce the concept being tested
+   - Use connecting phrases like "Although...", "However...", "It's important to note..."
+   - Sound authoritative and educational
+
+4. DIFFICULTY LEVELS:
+   - Easy: Test definitions and basic concepts (recall)
+   - Medium: Test understanding and application (comprehension)
+   - Hard: Test analysis, evaluation, and complex scenarios (critical thinking)
+
+5. QUESTION STEMS TO USE:
+   - "Which of the following..."
+   - "What should [name]..."
+   - "An example of ___ is..."
+   - "Which technique/method/strategy..."
+   - "[Name] wants to ___. What should [he/she]..."
+
+EXAMPLE OF PERFECT DECA STYLE:
+
+Question: "Kevin is editing a professional report and isn't sure whether to italicize or underscore a book title. To obtain the correct information, Kevin should"
+
+Options:
+A. Ask his coworker for advice
+B. Refer to the style manual
+C. Look up information in dictionary
+D. Identify readers' preferences
+
+Explanation: "Kevin should refer to the appropriate publisher's style manual because it provides the correct formatting guidelines for professional documents. Asking a coworker for advice may lead to incorrect information if the coworker is unsure. Looking up information in a dictionary won't provide specific formatting rules for book titles. Identifying readers' preferences is not relevant to standardized formatting conventions. Style manuals are the authoritative source for document formatting decisions."
+
+Return ONLY valid JSON:
 {
   "questions": [
     {
-      "question": "The question text here (direct, clear, tests a specific concept)",
-      "options": ["Option A (concise)", "Option B (concise)", "Option C (concise)", "Option D (concise)"],
-      "correct_answer": 0,  // Index of correct answer (0-3)
-      "explanation": "Clear explanation referencing the business concept, why the answer is correct, and why other options are incorrect",
-      "difficulty": "medium",  // "easy", "medium", or "hard"
-      "topic_tags": ["topic1", "topic2"]  // Relevant business topics/concepts
+      "question": "Scenario with name and specific question",
+      "options": ["2-6 words", "2-6 words", "2-6 words", "2-6 words"],
+      "correct_answer": 0,
+      "explanation": "4-7 sentence detailed explanation covering why correct answer is right and why each wrong answer is incorrect",
+      "difficulty": "medium",
+      "topic_tags": ["topic1", "topic2"]
     }
   ]
-}
+}`
 
-Return ONLY a valid JSON object, no other text.`
+  const userPrompt = `Generate EXACTLY ${questionCount} DECA-style questions for: ${eventName}
 
-  const userPrompt = `Generate ${questionCount} multiple-choice question(s) for the event: ${eventName}
+REQUIRED DIFFICULTY DISTRIBUTION (MUST FOLLOW EXACTLY):
+- ${distribution.easy} EASY questions (basic definitions and concepts)
+- ${distribution.medium} MEDIUM questions (understanding and application)  
+- ${distribution.hard} HARD questions (analysis and complex scenarios)
 
-Knowledge Base Content:
-${fullText.substring(0, 15000)}${fullText.length > 15000 ? '\n\n[... content truncated for length ...]' : ''}${contextPrompt}
+Knowledge Base:
+${fullText.substring(0, 12000)}${fullText.length > 12000 ? '\n[...truncated...]' : ''}${contextPrompt}
 
-Generate questions that test understanding of the concepts in the knowledge base.`
+CRITICAL REMINDERS:
+- Use real names in scenarios
+- Keep options to 2-6 words MAXIMUM
+- Write 4-7 sentence explanations
+- Generate EXACTLY ${distribution.easy} easy + ${distribution.medium} medium + ${distribution.hard} hard questions
+- Match exact DECA style from examples`
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Using gpt-4o-mini for cost efficiency, can upgrade to gpt-4o if needed
+      model: 'gpt-5-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0.7,
+      reasoning_effort: 'medium', // Increased from 'low' for better quality matching
+      verbosity: 'medium', // Increased for detailed explanations
       response_format: { type: 'json_object' },
     })
 
@@ -91,36 +150,20 @@ Generate questions that test understanding of the concepts in the knowledge base
       throw new Error('No response from OpenAI')
     }
 
-    // Parse the JSON response
-    let parsed: { questions?: GeneratedQuestion[] }
-    try {
-      parsed = JSON.parse(content)
-    } catch (parseError) {
-      // Try to extract JSON from markdown code blocks if present
-      console.error('JSON parse error, trying alternative parsing:', parseError)
-      const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || content.match(/(\{[\s\S]*\})/)
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[1])
-      } else {
-        // Last resort: try to parse as array directly
-        const arrayMatch = content.match(/\[[\s\S]*\]/)
-        if (arrayMatch) {
-          const arrayData = JSON.parse(arrayMatch[0])
-          parsed = { questions: Array.isArray(arrayData) ? arrayData : [arrayData] }
-        } else {
-          throw new Error('Could not parse OpenAI response as JSON')
-        }
-      }
-    }
-
-    // Extract questions from the parsed object
+    const parsed: { questions?: GeneratedQuestion[] } = JSON.parse(content)
     const questions: GeneratedQuestion[] = parsed.questions || []
 
-    // Validate and clean questions
+    // Validate questions with stricter rules AND verify difficulty distribution
+    const questionsByDifficulty = {
+      easy: [] as GeneratedQuestion[],
+      medium: [] as GeneratedQuestion[],
+      hard: [] as GeneratedQuestion[]
+    }
+    
     const validatedQuestions: GeneratedQuestion[] = questions
       .filter((q) => {
-        // Ensure all required fields are present
-        return (
+        // Check basic structure
+        const hasBasicStructure = (
           q.question &&
           Array.isArray(q.options) &&
           q.options.length === 4 &&
@@ -129,25 +172,126 @@ Generate questions that test understanding of the concepts in the knowledge base
           q.correct_answer < 4 &&
           q.explanation
         )
+        
+        // Validate option length (2-6 words each)
+        const optionsValid = q.options.every(opt => {
+          const wordCount = opt.trim().split(/\s+/).length
+          return wordCount >= 2 && wordCount <= 6
+        })
+        
+        // Validate explanation length (should be substantial)
+        const explanationValid = q.explanation.trim().length >= 200
+        
+        return hasBasicStructure && optionsValid && explanationValid
       })
-      .map((q) => ({
-        question: q.question.trim(),
-        options: q.options.map((opt) => opt.trim()),
-        correct_answer: q.correct_answer,
-        explanation: q.explanation.trim(),
-        difficulty: q.difficulty || 'medium',
-        topic_tags: q.topic_tags || [],
-      }))
+      .map((q) => {
+        const validated: GeneratedQuestion = {
+          question: q.question.trim(),
+          options: q.options.map((opt) => opt.trim()),
+          correct_answer: q.correct_answer,
+          explanation: q.explanation.trim(),
+          difficulty: q.difficulty || 'medium',
+          topic_tags: q.topic_tags || [],
+        }
+        
+        // Group by difficulty
+        const diff = validated.difficulty as 'easy' | 'medium' | 'hard'
+        if (questionsByDifficulty[diff]) {
+          questionsByDifficulty[diff].push(validated)
+        }
+        
+        return validated
+      })
+    
+    // Log distribution for debugging
+    console.log(`Generated distribution - Easy: ${questionsByDifficulty.easy.length}, Medium: ${questionsByDifficulty.medium.length}, Hard: ${questionsByDifficulty.hard.length}`)
+    console.log(`Target distribution - Easy: ${distribution.easy}, Medium: ${distribution.medium}, Hard: ${distribution.hard}`)
 
     if (validatedQuestions.length === 0) {
-      throw new Error('No valid questions generated')
+      throw new Error('No valid questions generated that match DECA style requirements')
     }
 
     return validatedQuestions
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 400) {
+      console.error('OpenAI API validation error:', error.message)
+      throw new Error(`API validation failed: ${error.message}`)
+    }
     console.error('Error generating questions with OpenAI:', error)
     throw error
   }
+}
+
+/**
+ * Batch generate questions with enforced difficulty distribution
+ * Ensures exact 40/40/20 split across all batches
+ */
+export async function generateQuestionsInBatch(
+  knowledgeBaseText: string,
+  eventName: string,
+  additionalContext: string | null,
+  totalQuestions: number,
+  batchSize: number = 10
+): Promise<GeneratedQuestion[]> {
+  const allQuestions: GeneratedQuestion[] = []
+  const batches = Math.ceil(totalQuestions / batchSize)
+  
+  // Calculate total distribution needed
+  const totalDistribution = calculateDifficultyDistribution(totalQuestions)
+  
+  let remainingEasy = totalDistribution.easy
+  let remainingMedium = totalDistribution.medium
+  let remainingHard = totalDistribution.hard
+
+  for (let i = 0; i < batches; i++) {
+    const questionsInBatch = Math.min(batchSize, totalQuestions - i * batchSize)
+    
+    // Calculate distribution for this specific batch
+    const batchDistribution = calculateDifficultyDistribution(questionsInBatch)
+    
+    // Adjust for remaining questions to ensure exact total
+    const easyForBatch = Math.min(batchDistribution.easy, remainingEasy)
+    const hardForBatch = Math.min(batchDistribution.hard, remainingHard)
+    const mediumForBatch = questionsInBatch - easyForBatch - hardForBatch
+    
+    console.log(`Batch ${i + 1}: Generating ${easyForBatch} easy, ${mediumForBatch} medium, ${hardForBatch} hard`)
+    
+    try {
+      const questions = await generateQuestionsFromText(
+        knowledgeBaseText,
+        eventName,
+        additionalContext,
+        questionsInBatch
+      )
+      
+      allQuestions.push(...questions)
+      
+      // Update remaining counts
+      const generated = {
+        easy: questions.filter(q => q.difficulty === 'easy').length,
+        medium: questions.filter(q => q.difficulty === 'medium').length,
+        hard: questions.filter(q => q.difficulty === 'hard').length
+      }
+      
+      remainingEasy -= generated.easy
+      remainingMedium -= generated.medium
+      remainingHard -= generated.hard
+      
+    } catch (error) {
+      console.error(`Batch ${i + 1} failed:`, error)
+    }
+  }
+  
+  // Final distribution check
+  const finalDistribution = {
+    easy: allQuestions.filter(q => q.difficulty === 'easy').length,
+    medium: allQuestions.filter(q => q.difficulty === 'medium').length,
+    hard: allQuestions.filter(q => q.difficulty === 'hard').length
+  }
+  
+  console.log(`Final distribution - Easy: ${finalDistribution.easy}/${totalDistribution.easy}, Medium: ${finalDistribution.medium}/${totalDistribution.medium}, Hard: ${finalDistribution.hard}/${totalDistribution.hard}`)
+
+  return allQuestions
 }
 
 /**
@@ -161,7 +305,6 @@ export function chunkText(text: string, chunkSize: number = 2000, overlap: numbe
     const end = Math.min(start + chunkSize, text.length)
     let chunk = text.slice(start, end)
 
-    // Try to break at sentence boundaries
     if (end < text.length) {
       const lastPeriod = chunk.lastIndexOf('.')
       const lastNewline = chunk.lastIndexOf('\n')
@@ -182,4 +325,3 @@ export function chunkText(text: string, chunkSize: number = 2000, overlap: numbe
 
   return chunks.filter((chunk) => chunk.length > 0)
 }
-
